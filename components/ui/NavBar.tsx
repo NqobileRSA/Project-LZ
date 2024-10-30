@@ -5,14 +5,20 @@ import { Menu, X, Camera, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState('/');
+// Define types for navigation links
+interface NavigationLink {
+  name: string;
+  path: string;
+}
+
+const Navbar: React.FC = () => {
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [activeLink, setActiveLink] = useState<string>('/');
   const pathname = usePathname();
 
   // Navigation links array
-  const navigationLinks = [
+  const navigationLinks: NavigationLink[] = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '#about' },
     { name: 'Archives', path: '#archives' },
@@ -50,7 +56,7 @@ const Navbar = () => {
     handleScroll(); // Initial check
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [pathname]);
+  }, [pathname, navigationLinks]);
 
   // Update active link when pathname changes
   useEffect(() => {
@@ -92,7 +98,7 @@ const Navbar = () => {
     },
   };
 
-  const isLinkActive = (linkPath) => {
+  const isLinkActive = (linkPath: string): boolean => {
     if (linkPath.startsWith('#')) {
       return activeLink === linkPath;
     }
