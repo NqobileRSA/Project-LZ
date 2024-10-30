@@ -16,7 +16,7 @@ export default function Home() {
       setScrollY(window.scrollY);
     };
 
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: any) => {
       setMousePosition({
         x: e.clientX / window.innerWidth,
         y: e.clientY / window.innerHeight,
