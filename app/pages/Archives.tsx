@@ -1,27 +1,41 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Camera, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+interface ImageData {
+  src: string;
+  category: string;
+  year: string;
+  title: string;
+}
+
 const Archives = () => {
+  // Initialize with null to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const cardsRef = useRef([]);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Handle mounting
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Move all window-dependent logic into a single useEffect
+  useEffect(() => {
+    if (!mounted) return;
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
-    checkMobile();
-
     const handleScroll = () => {
       setScrollY(window.scrollY);
-
       if (isMobile) {
         handleMobileScroll();
       }
@@ -40,35 +54,38 @@ const Archives = () => {
           const scale = 1 - Math.min(0.2, Math.abs(scrollProgress - 0.5) * 0.4);
           const translateY = Math.min(0, (scrollProgress - 0.5) * 100);
 
-          card.style.transform = `
-            perspective(1000px)
-            translateY(${translateY}px)
-            scale(${scale})
-            ${
-              index % 2 === 0
-                ? 'rotateY(' + rotation + 'deg)'
-                : 'rotateY(' + -rotation + 'deg)'
-            }
-          `;
-          card.style.opacity = Math.min(1, scrollProgress * 2);
+          requestAnimationFrame(() => {
+            card.style.transform = `
+              perspective(1000px)
+              translateY(${translateY}px)
+              scale(${scale})
+              ${
+                index % 2 === 0
+                  ? `rotateY(${rotation}deg)`
+                  : `rotateY(${-rotation}deg)`
+              }
+            `;
+            card.style.opacity = Math.min(1, scrollProgress * 2).toString();
+          });
         }
       });
     };
 
-    const handleResize = () => {
-      checkMobile();
-    };
+    // Initial check
+    checkMobile();
 
+    // Event listeners
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', checkMobile);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', checkMobile);
     };
-  }, [isMobile]);
+  }, [mounted, isMobile]);
 
-  const images = [
+  // Static data that won't cause hydration mismatches
+  const images: ImageData[] = [
     {
       src: '/radio.jpg',
       category: 'events',
@@ -155,7 +172,9 @@ const Archives = () => {
 
   const categories = ['all', 'documentary', 'street', 'events', 'portrait'];
 
-  const getCardStyle = (index) => {
+  const getCardStyle = (index: number) => {
+    if (!mounted) return {};
+
     if (!isMobile) {
       return {
         transform: `translateY(${scrollY * 0.1 * ((index % 3) + 1)}px) ${
@@ -169,7 +188,6 @@ const Archives = () => {
       };
     }
 
-    // Mobile initial style - will be updated by scroll handler
     return {
       transform: 'translateY(100px)',
       opacity: 0,
@@ -177,6 +195,10 @@ const Archives = () => {
         'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease',
     };
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
@@ -197,7 +219,7 @@ const Archives = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6  justify-center">
+          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 justify-center">
             {categories.map((category) => (
               <button
                 key={category}
@@ -242,26 +264,23 @@ const Archives = () => {
           </div>
         )}
 
-        {/* Scrolling Content */}
+        {/* Grid Content */}
         <div className="relative pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4">
             {filteredImages.map((image, index) => (
               <div
-                key={index}
+                key={`${image.src}-${index}`}
                 ref={(el) => (cardsRef.current[index] = el)}
                 className={`relative overflow-hidden transform transition-all duration-500
                   ${
                     !isMobile
-                      ? `
-                    ${
-                      index % 3 === 0
-                        ? 'rotate-2'
-                        : index % 3 === 1
-                        ? '-rotate-1'
-                        : 'rotate-1'
-                    }
-                    hover:rotate-0
-                  `
+                      ? `${
+                          index % 3 === 0
+                            ? 'rotate-2'
+                            : index % 3 === 1
+                            ? '-rotate-1'
+                            : 'rotate-1'
+                        } hover:rotate-0`
                       : ''
                   }
                   hover:scale-105 group`}
@@ -280,7 +299,6 @@ const Archives = () => {
                     className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
                   <div
                     className={`absolute inset-0 flex flex-col justify-end p-4 transform 
                     ${
