@@ -11,7 +11,6 @@ interface ImageData {
 }
 
 const Archives = () => {
-  // Initialize with null to avoid hydration mismatch
   const [mounted, setMounted] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -19,7 +18,7 @@ const Archives = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const cardsRef = useRef<Array<HTMLDivElement | null>>([]);
 
   // Handle mounting
   useEffect(() => {
@@ -122,7 +121,12 @@ const Archives = () => {
       year: '2022',
       title: 'City Lights',
     },
-    { src: '/swag.jpg', category: 'street', year: '2022', title: 'Style Wars' },
+    {
+      src: '/swag.jpg',
+      category: 'street',
+      year: '2022',
+      title: 'Style Wars',
+    },
     {
       src: '/bittercure.jpg',
       category: 'documentary',
@@ -135,14 +139,24 @@ const Archives = () => {
       year: '2021',
       title: 'Face of Now',
     },
-    { src: '/vibe.jpg', category: 'events', year: '2021', title: 'Pulse' },
+    {
+      src: '/vibe.jpg',
+      category: 'events',
+      year: '2021',
+      title: 'Pulse',
+    },
     {
       src: '/half.jpg',
       category: 'street',
       year: '2021',
       title: 'Split Second',
     },
-    { src: '/cusuin.jpg', category: 'events', year: '2021', title: 'Movement' },
+    {
+      src: '/cusuin.jpg',
+      category: 'events',
+      year: '2021',
+      title: 'Movement',
+    },
     {
       src: '/yellow.png',
       category: 'documentary',
@@ -155,8 +169,18 @@ const Archives = () => {
       year: '2020',
       title: 'Pink Dreams',
     },
-    { src: '/fb.jpg', category: 'street', year: '2020', title: 'Forward Base' },
-    { src: '/k1.png', category: 'events', year: '2020', title: 'K-One' },
+    {
+      src: '/fb.jpg',
+      category: 'street',
+      year: '2020',
+      title: 'Forward Base',
+    },
+    {
+      src: '/k1.png',
+      category: 'events',
+      year: '2020',
+      title: 'K-One',
+    },
     {
       src: '/sunday.jpg',
       category: 'documentary',
@@ -194,6 +218,11 @@ const Archives = () => {
       transition:
         'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease',
     };
+  };
+
+  // Fix: Create a properly typed ref callback
+  const setCardRef = (index: number) => (element: HTMLDivElement | null) => {
+    cardsRef.current[index] = element;
   };
 
   if (!mounted) {
@@ -270,7 +299,7 @@ const Archives = () => {
             {filteredImages.map((image, index) => (
               <div
                 key={`${image.src}-${index}`}
-                ref={(el) => (cardsRef.current[index] = el)}
+                ref={setCardRef(index)}
                 className={`relative overflow-hidden transform transition-all duration-500
                   ${
                     !isMobile
